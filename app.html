@@ -1,0 +1,2105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smooth Paycheck — Your Sustainable Paycheck Calculator</title>
+<meta name="description" content="Calculate the largest amount you can safely pay yourself every month, even during slow stretches." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet" />
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #FBF9F4;
+    --bg-warm: #F5F0E6;
+    --paper: #FFFFFF;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4A4A;
+    --ink-muted: #8A8580;
+    --rule: #E8E2D4;
+    --rule-soft: #F0EBDF;
+    --accent: #2A6F4D;
+    --accent-soft: #DCEAE0;
+    --hi: #F4D35E;
+    --warn: #E08E45;
+    --danger: #C94A3F;
+    --tax: #5B8DBE;
+    --ops: #E08E45;
+    --buffer: #2A6F4D;
+    --pay: #1A1A1A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter Tight', -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .serif { font-family: 'Fraunces', serif; }
+  .italic-serif { font-family: 'Instrument Serif', serif; font-style: italic; }
+
+  /* ── License gate ── */
+  .gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .gate-card {
+    max-width: 440px;
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 48px 40px;
+    text-align: center;
+    border-radius: 4px;
+  }
+  .gate-logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+  .gate-logo-dot {
+    width: 9px; height: 9px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .gate h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    margin-bottom: 14px;
+  }
+  .gate h1 .em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .gate p {
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+    font-size: 15px;
+  }
+  .gate input {
+    width: 100%;
+    padding: 16px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    background: var(--bg);
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .gate input:focus {
+    outline: none;
+    border-color: var(--ink);
+  }
+  .gate-error {
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 12px;
+    min-height: 18px;
+    text-align: left;
+  }
+  .gate-help {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px dashed var(--rule);
+    font-size: 13px;
+    color: var(--ink-muted);
+  }
+  .gate-help a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .gate-help a:hover { text-decoration: underline; }
+
+  /* ── Layout shell ── */
+  .shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 24px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 32px;
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .topbar-right { display: flex; gap: 8px; }
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 100px;
+    padding: 8px 14px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+  }
+  .icon-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--paper);
+  }
+
+  /* ── Step indicator ── */
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--rule);
+    transition: all 0.3s ease;
+  }
+  .step-dot.active {
+    background: var(--ink);
+    transform: scale(1.4);
+  }
+  .step-dot.done { background: var(--accent); }
+  .step-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  /* ── Step content ── */
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-eyebrow {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+  .step-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 44px);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 16px;
+    max-width: 18ch;
+  }
+  .step-title .em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .step-sub {
+    font-size: 17px;
+    color: var(--ink-soft);
+    margin-bottom: 36px;
+    max-width: 50ch;
+    line-height: 1.5;
+  }
+
+  /* ── Income inputs ── */
+  .income-list {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .income-row {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    align-items: center;
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.15s;
+  }
+  .income-row:last-child { border-bottom: none; }
+  .income-row:focus-within { background: var(--bg); }
+  .income-row .month {
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-right: 1px solid var(--rule);
+  }
+  .income-row .input-wrap {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+  }
+  .income-row .input-wrap .currency {
+    color: var(--ink-muted);
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    margin-right: 8px;
+  }
+  .income-row input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    width: 100%;
+    padding: 16px 0;
+    color: var(--ink);
+    -moz-appearance: textfield;
+  }
+  .income-row input::-webkit-outer-spin-button,
+  .income-row input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .income-row .remove-btn {
+    background: transparent;
+    border: none;
+    padding: 0 18px;
+    color: var(--ink-muted);
+    cursor: pointer;
+    font-size: 18px;
+    transition: color 0.15s;
+  }
+  .income-row .remove-btn:hover { color: var(--danger); }
+  .income-row .remove-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .add-row-btn, .or-paste {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px dashed var(--rule);
+    color: var(--ink-soft);
+    padding: 12px 18px;
+    border-radius: 4px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .add-row-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 24px 0 16px;
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+  .or-divider::before, .or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* Paste modal */
+  .paste-area {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 14px;
+    min-height: 120px;
+    margin-bottom: 12px;
+    resize: vertical;
+  }
+  .paste-area:focus { outline: none; border-color: var(--ink); }
+  .paste-hint {
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 14px;
+  }
+
+  /* ── Expense / tax inputs ── */
+  .input-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 14px;
+  }
+  .input-card label {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .input-card .helper {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-bottom: 14px;
+  }
+  .input-card .big-input {
+    display: flex;
+    align-items: baseline;
+    border-bottom: 2px solid var(--rule);
+    padding-bottom: 8px;
+    transition: border-color 0.2s;
+  }
+  .input-card .big-input:focus-within { border-bottom-color: var(--ink); }
+  .input-card .big-input .prefix {
+    font-family: 'Fraunces', serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--ink-muted);
+    margin-right: 8px;
+  }
+  .input-card .big-input input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    width: 100%;
+    color: var(--ink);
+    -moz-appearance: textfield;
+  }
+  .input-card .big-input input::-webkit-outer-spin-button,
+  .input-card .big-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .input-card .big-input .suffix {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-left: 8px;
+  }
+
+  .defaults-btn {
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: var(--bg-warm);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.18s;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .defaults-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .defaults-btn b { font-weight: 500; }
+
+  /* Tax slider */
+  .slider-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 32px 28px;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .slider-display {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 72px;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 24px;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .slider-display .pct { color: var(--ink-muted); font-size: 0.5em; vertical-align: 0.5em; margin-left: 4px; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--rule);
+    border-radius: 100px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--rule);
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type="range"]::-moz-range-thumb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--ink);
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  .slider-bounds {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .preset-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .preset-chip {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 12px 14px;
+    border-radius: 4px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+  }
+  .preset-chip:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .preset-chip.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .preset-chip b { font-family: 'Fraunces', serif; font-weight: 600; }
+
+  /* ── Footer nav ── */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+    gap: 12px;
+  }
+  .btn {
+    padding: 16px 28px;
+    border-radius: 100px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.18s ease;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent);
+    transform: translateY(-1px);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--rule);
+  }
+  .btn-secondary:hover { border-color: var(--ink); color: var(--ink); }
+  .btn-final {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 18px 36px;
+    font-size: 16px;
+  }
+  .btn-final:hover { background: var(--accent); transform: translateY(-1px); }
+  .arrow { transition: transform 0.2s; }
+  .btn:hover .arrow { transform: translateX(3px); }
+
+  /* ── RESULTS SCREEN ── */
+  .hero-result {
+    text-align: center;
+    padding: 16px 0 48px;
+    animation: rise 0.6s ease both;
+  }
+  .hero-eyebrow {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--ink-muted);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after {
+    content: "—";
+    margin: 0 12px;
+    color: var(--rule);
+  }
+  .paycheck-amount {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(72px, 14vw, 132px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .paycheck-amount .currency {
+    font-size: 0.45em;
+    color: var(--ink-muted);
+    font-weight: 500;
+    vertical-align: 0.5em;
+    margin-right: 0.05em;
+  }
+  .paycheck-cadence {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+  .paycheck-verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .verdict-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 32px;
+    margin-bottom: 16px;
+    animation: rise 0.6s ease both;
+  }
+  .card:nth-of-type(1) { animation-delay: 0.1s; }
+  .card:nth-of-type(2) { animation-delay: 0.2s; }
+  .card:nth-of-type(3) { animation-delay: 0.3s; }
+  .card:nth-of-type(4) { animation-delay: 0.4s; }
+
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--rule);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .card-meta {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-muted);
+  }
+
+  /* Allocation */
+  .alloc-bar {
+    display: flex;
+    height: 56px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    border: 1px solid var(--rule);
+  }
+  .alloc-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .alloc-segment.tax { background: var(--tax); }
+  .alloc-segment.ops { background: var(--ops); }
+  .alloc-segment.buffer { background: var(--buffer); }
+  .alloc-segment.pay { background: var(--pay); }
+
+  .alloc-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 28px;
+  }
+  .alloc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .alloc-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .alloc-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .alloc-swatch.tax { background: var(--tax); }
+  .alloc-swatch.ops { background: var(--ops); }
+  .alloc-swatch.buffer { background: var(--buffer); }
+  .alloc-swatch.pay { background: var(--pay); }
+  .alloc-vals { text-align: right; }
+  .alloc-vals .pct {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  .alloc-vals .amt {
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .alloc-explainer {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--rule);
+    line-height: 1.5;
+  }
+  .alloc-explainer b {
+    font-style: normal;
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* Buffer */
+  .buffer-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 24px;
+  }
+  .buffer-stat .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-muted);
+    margin-bottom: 8px;
+  }
+  .buffer-stat .value {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .buffer-stat .value.target { color: var(--ink); }
+  .buffer-stat .value.current { color: var(--ink-soft); }
+  .buffer-track {
+    height: 12px;
+    background: var(--bg-warm);
+    border: 1px solid var(--rule);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .buffer-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 100px;
+    transition: width 1s ease;
+  }
+  .buffer-progress-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+  }
+  .buffer-progress-row b {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .buffer-takeaway {
+    margin-top: 24px;
+    padding: 18px 20px;
+    background: var(--bg-warm);
+    border-left: 3px solid var(--accent);
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .buffer-takeaway b { color: var(--ink); font-weight: 500; }
+
+  /* Stability */
+  .stability {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 40px;
+    align-items: center;
+  }
+  .stability-dial {
+    width: 160px; height: 160px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .stability-dial svg {
+    transform: rotate(-90deg);
+    width: 100%; height: 100%;
+  }
+  .dial-track {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 12;
+  }
+  .dial-fill {
+    fill: none;
+    stroke: var(--warn);
+    stroke-width: 12;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s ease;
+  }
+  .dial-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .dial-num {
+    font-family: 'Fraunces', serif;
+    font-size: 48px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .dial-of {
+    font-size: 11px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-top: 4px;
+  }
+  .stability-text h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .stability-text h4 .em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .stability-text p {
+    font-size: 15px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .stability-scale {
+    margin-top: 20px;
+    display: flex;
+    height: 6px;
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .scale-tier { flex: 1; }
+  .scale-tier.danger { background: var(--danger); opacity: 0.25; }
+  .scale-tier.warn { background: var(--warn); opacity: 0.25; }
+  .scale-tier.good { background: var(--accent); opacity: 0.25; }
+  .scale-tier.active { opacity: 1; }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Income chart */
+  .chart-svg {
+    width: 100%;
+    height: 180px;
+    overflow: visible;
+  }
+  .chart-baseline {
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
+  }
+  .chart-baseline-label {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 10px;
+    fill: var(--accent);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .chart-month-label {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 10px;
+    fill: var(--ink-muted);
+    text-transform: uppercase;
+  }
+  .chart-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--rule);
+    font-size: 13px;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+  }
+
+  .actions {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    animation: rise 0.6s ease 0.5s both;
+  }
+  .actions .btn-primary { flex: 1; justify-content: center; padding: 18px 28px; }
+  .actions .btn-secondary { padding: 18px 24px; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* Mobile */
+  @media (max-width: 720px) {
+    .shell { padding: 16px 18px 60px; }
+    .topbar { padding-bottom: 16px; margin-bottom: 24px; }
+    .icon-btn span { display: none; }
+    .icon-btn { padding: 8px 12px; }
+    .step-title { font-size: 28px; }
+    .income-row { grid-template-columns: 100px 1fr auto; }
+    .income-row .month { padding: 14px; font-size: 13px; }
+    .income-row input { font-size: 16px; padding: 14px 0; }
+    .input-card .big-input input { font-size: 26px; }
+    .input-card .big-input .prefix { font-size: 22px; }
+    .slider-display { font-size: 56px; }
+    .preset-row { grid-template-columns: 1fr; }
+    .card { padding: 22px 18px; }
+    .alloc-list { grid-template-columns: 1fr; }
+    .buffer-row { grid-template-columns: 1fr; gap: 18px; }
+    .stability { grid-template-columns: 1fr; gap: 24px; text-align: center; }
+    .stability-dial { margin: 0 auto; }
+    .actions { flex-direction: column; }
+    .actions .btn-primary, .actions .btn-secondary { width: 100%; padding: 16px; justify-content: center; }
+    .nav-row { flex-direction: column-reverse; }
+    .nav-row .btn { width: 100%; justify-content: center; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 14px 24px;
+    border-radius: 100px;
+    font-size: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ════ LICENSE GATE ════ -->
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <span class="gate-logo-dot"></span> Smooth Paycheck
+    </div>
+    <h1>Welcome <span class="em">in.</span></h1>
+    <p>Paste your license key to unlock the full tool. You got this in your email after purchase.</p>
+    <input id="license-input" type="text" placeholder="Your license key" autocomplete="off" spellcheck="false" />
+    <div id="license-error" class="gate-error"></div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="checkLicense()">Unlock →</button>
+    <div class="gate-help">
+      Don't have a key yet? <a href="index.html">Get Smooth Paycheck →</a><br>
+      <span style="font-size:11px; color:var(--ink-muted); margin-top:8px; display:inline-block;">Lost your key? Check the email from your purchase, or DM us.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MAIN APP ════ -->
+<div id="app" class="shell" style="display:none;">
+
+  <div class="topbar">
+    <a class="logo" href="index.html"><span class="logo-dot"></span> Smooth Paycheck</a>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="resetAll()" title="Start over">↻ <span>Start over</span></button>
+    </div>
+  </div>
+
+  <!-- Step indicator (hidden on results) -->
+  <div id="indicator" class="step-indicator">
+    <span id="dot-1" class="step-dot active"></span>
+    <span id="dot-2" class="step-dot"></span>
+    <span id="dot-3" class="step-dot"></span>
+    <span id="step-label" class="step-label">Step 1 of 3 · Income</span>
+  </div>
+
+  <!-- ────── STEP 1: INCOME ────── -->
+  <div id="screen-1" class="screen active">
+    <div class="step-eyebrow">Step 1</div>
+    <h2 class="step-title">Drop in your last few months <span class="em">of income.</span></h2>
+    <p class="step-sub">More months = smarter math. Start with at least 3. You can add more or fewer rows as you like.</p>
+
+    <div id="income-list" class="income-list"></div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+      <button class="add-row-btn" onclick="addIncomeRow()">＋ Add another month</button>
+      <button class="add-row-btn" onclick="togglePaste()" id="paste-toggle">📋 Paste from spreadsheet</button>
+    </div>
+
+    <div id="paste-section" style="display:none; margin-top:16px;">
+      <div class="paste-hint">Paste numbers, one per line. Most recent month last. (Or copy a column from a spreadsheet.)</div>
+      <textarea id="paste-area" class="paste-area" placeholder="5800&#10;9200&#10;2400&#10;6700&#10;11800"></textarea>
+      <button class="btn btn-secondary" onclick="applyPaste()">Use these values</button>
+    </div>
+
+    <div class="nav-row">
+      <span></span>
+      <button id="step1-next" class="btn btn-primary" onclick="goToStep(2)">Next <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ────── STEP 2: EXPENSES ────── -->
+  <div id="screen-2" class="screen">
+    <div class="step-eyebrow">Step 2</div>
+    <h2 class="step-title">What does your <span class="em">life cost?</span></h2>
+    <p class="step-sub">Rough monthly numbers — round to the nearest $100. We'll use these to size your buffer.</p>
+
+    <div class="input-card">
+      <label for="exp-personal">Personal expenses</label>
+      <div class="helper">Rent, food, life stuff, the gym you barely use.</div>
+      <div class="big-input">
+        <span class="prefix">$</span>
+        <input id="exp-personal" type="number" inputmode="numeric" placeholder="3000" />
+        <span class="suffix">/ month</span>
+      </div>
+    </div>
+
+    <div class="input-card">
+      <label for="exp-business">Business expenses</label>
+      <div class="helper">Software, contractors, the things you write off at tax time.</div>
+      <div class="big-input">
+        <span class="prefix">$</span>
+        <input id="exp-business" type="number" inputmode="numeric" placeholder="500" />
+        <span class="suffix">/ month</span>
+      </div>
+    </div>
+
+    <button class="defaults-btn" onclick="useExpenseDefaults()">
+      <span>Don't know your numbers? <b>Use sensible defaults</b></span>
+      <span style="color:var(--accent)">→</span>
+    </button>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goToStep(3)">Next <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ────── STEP 3: TAX ────── -->
+  <div id="screen-3" class="screen">
+    <div class="step-eyebrow">Step 3</div>
+    <h2 class="step-title">How much goes <span class="em">to tax?</span></h2>
+    <p class="step-sub">Roughly. We'll adjust if you want. Pick a preset or move the slider.</p>
+
+    <div class="slider-card">
+      <div class="slider-display"><span id="tax-display">25</span><span class="pct">%</span></div>
+      <input id="tax-slider" type="range" min="0" max="50" value="25" oninput="updateTaxDisplay(this.value)" />
+      <div class="slider-bounds"><span>0%</span><span>50%</span></div>
+    </div>
+
+    <div class="preset-row">
+      <button class="preset-chip" onclick="setTaxPreset(25, this)">US self-employed <b>~25%</b></button>
+      <button class="preset-chip" onclick="setTaxPreset(30, this)">UK self-assessment <b>~30%</b></button>
+      <button class="preset-chip" onclick="setTaxPreset(20, this)">India freelancer <b>~20%</b></button>
+      <button class="preset-chip" onclick="setTaxPreset(15, this)">Lower bracket <b>~15%</b></button>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+      <button class="btn btn-final" onclick="calculateAndShow()">Show my paycheck <span class="arrow">→</span></button>
+    </div>
+  </div>
+
+  <!-- ────── RESULTS SCREEN ────── -->
+  <div id="screen-results" class="screen">
+    <div class="hero-result">
+      <div class="hero-eyebrow">Your sustainable paycheck</div>
+      <div class="paycheck-amount"><span class="currency">$</span><span id="r-paycheck">0</span></div>
+      <div class="paycheck-cadence">— every month, even slow ones</div>
+      <div class="paycheck-verdict">
+        <span class="verdict-dot"></span>
+        <span id="r-verdict">Safe to pay yourself this much</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">When money lands, split it like this</div>
+        <div class="card-meta">per $1,000 earned</div>
+      </div>
+      <div class="alloc-bar">
+        <div id="seg-tax" class="alloc-segment tax"></div>
+        <div id="seg-ops" class="alloc-segment ops"></div>
+        <div id="seg-buf" class="alloc-segment buffer"></div>
+        <div id="seg-pay" class="alloc-segment pay"></div>
+      </div>
+      <div class="alloc-list">
+        <div class="alloc-item">
+          <div class="alloc-label"><span class="alloc-swatch tax"></span> Taxes</div>
+          <div class="alloc-vals">
+            <div class="pct" id="r-tax-pct">25%</div>
+            <div class="amt" id="r-tax-amt">$250 per $1k</div>
+          </div>
+        </div>
+        <div class="alloc-item">
+          <div class="alloc-label"><span class="alloc-swatch ops"></span> Operating</div>
+          <div class="alloc-vals">
+            <div class="pct" id="r-ops-pct">15%</div>
+            <div class="amt" id="r-ops-amt">$150 per $1k</div>
+          </div>
+        </div>
+        <div class="alloc-item">
+          <div class="alloc-label"><span class="alloc-swatch buffer"></span> Buffer</div>
+          <div class="alloc-vals">
+            <div class="pct" id="r-buf-pct">10%</div>
+            <div class="amt" id="r-buf-amt">$100 per $1k</div>
+          </div>
+        </div>
+        <div class="alloc-item">
+          <div class="alloc-label"><span class="alloc-swatch pay"></span> Owner pay</div>
+          <div class="alloc-vals">
+            <div class="pct" id="r-pay-pct">50%</div>
+            <div class="amt" id="r-pay-amt">$500 per $1k</div>
+          </div>
+        </div>
+      </div>
+      <div class="alloc-explainer">
+        Open <b>four sub-accounts</b> at your bank. The moment a client payment hits, move the percentages above into each one. Pay yourself only from the Owner Pay account — never the main one.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Your buffer target</div>
+        <div class="card-meta">~2 months of paycheck</div>
+      </div>
+      <div class="buffer-row">
+        <div class="buffer-stat">
+          <div class="label">You need</div>
+          <div class="value target">$<span id="r-buffer-target">0</span></div>
+        </div>
+        <div class="buffer-stat">
+          <div class="label">Roughly saved per month</div>
+          <div class="value current">$<span id="r-buffer-monthly">0</span></div>
+        </div>
+      </div>
+      <div class="buffer-track"><div id="r-buffer-fill" class="buffer-fill" style="width:0%"></div></div>
+      <div class="buffer-progress-row">
+        <span>Saving the <b>10% buffer slice</b> from each payment</span>
+        <span><b id="r-buffer-months">~6</b> months to fill</span>
+      </div>
+      <div class="buffer-takeaway">
+        Once you've stashed <b>$<span id="r-buffer-target-2">0</span></b> in a separate account, slow months stop being scary. You just keep paying yourself <b>$<span id="r-paycheck-2">0</span></b> every month — same number, every time.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Your stability score</div>
+        <div class="card-meta">how wild your income swings</div>
+      </div>
+      <div class="stability">
+        <div class="stability-dial">
+          <svg viewBox="0 0 160 160">
+            <circle class="dial-track" cx="80" cy="80" r="70" />
+            <circle id="r-dial" class="dial-fill" cx="80" cy="80" r="70" stroke-dashoffset="440" />
+          </svg>
+          <div class="dial-center">
+            <div class="dial-num" id="r-stability">0</div>
+            <div class="dial-of">/ 100</div>
+          </div>
+        </div>
+        <div class="stability-text">
+          <h4 id="r-stability-verdict">—</h4>
+          <p id="r-stability-text">—</p>
+          <div class="stability-scale">
+            <div id="scale-1" class="scale-tier danger"></div>
+            <div id="scale-2" class="scale-tier warn"></div>
+            <div id="scale-3" class="scale-tier good"></div>
+          </div>
+          <div class="scale-labels">
+            <span>Chaotic</span><span>Bumpy</span><span>Steady</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Your income at a glance</div>
+        <div class="card-meta" id="r-chart-meta">—</div>
+      </div>
+      <div id="r-chart-wrap"></div>
+      <div class="chart-legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: var(--accent)"></span> Best month</div>
+        <div class="legend-item"><span class="legend-swatch" style="background: var(--tax)"></span> Normal months</div>
+        <div class="legend-item"><span class="legend-swatch" style="background: var(--danger)"></span> Slow month</div>
+        <div class="legend-item"><span style="display:inline-block;width:14px;height:0;border-top:2px dashed var(--accent);"></span> Your paycheck</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="downloadPDF()">↓ Download my one-page PDF</button>
+      <button class="btn btn-secondary" onclick="goToStep(1)">↻ Tweak inputs</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast">Saved.</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   STATE
+   ════════════════════════════════════════════════ */
+let state = {
+  income: [],      // array of {month: "Apr 2026", amount: 5800}
+  expPersonal: 0,
+  expBusiness: 0,
+  taxRate: 25,
+  results: null
+};
+
+const STORAGE_KEY = 'smoothpaycheck_v1';
+
+/* ════════════════════════════════════════════════
+   LICENSE GATE — Lemon Squeezy License API
+   ─────────────────────────────────────────────────
+   IMPORTANT: Set LS_PRODUCT_ID below to your real
+   product ID from the Lemon Squeezy dashboard.
+   Find it under: Products → click your product →
+   the URL will look like /products/12345 — that
+   number is your product ID.
+
+   How it works:
+     • First-time use: calls /licenses/activate.
+       This records the activation against the key
+       and returns an instance_id we save locally.
+     • Returning visits: calls /licenses/validate
+       with the saved key + instance to confirm the
+       license is still active.
+     • The product_id check ensures keys from other
+       Lemon Squeezy products can't unlock this app.
+
+   The Lemon Squeezy License API is public (no
+   secret needed), so this works from the browser
+   with no backend.
+   ════════════════════════════════════════════════ */
+
+// ⚠️  REPLACE THIS with your real product ID from Lemon Squeezy
+const LS_PRODUCT_ID = 0;  // e.g. 123456
+
+// Set to true while testing; false in production. When true,
+// any non-empty key unlocks (no API call). Useful before you've
+// configured the product ID or for offline testing.
+const LS_PLACEHOLDER_MODE = true;
+
+const LS_API = 'https://api.lemonsqueezy.com/v1';
+const STORAGE_LICENSE_KEY = 'smoothpaycheck_license';
+const STORAGE_INSTANCE_ID = 'smoothpaycheck_instance';
+
+async function checkLicense() {
+  const input = document.getElementById('license-input');
+  const error = document.getElementById('license-error');
+  const button = document.querySelector('#gate .btn-primary');
+  const key = input.value.trim();
+
+  error.textContent = '';
+
+  if (!key) {
+    error.textContent = 'Please paste your license key.';
+    return;
+  }
+
+  // Placeholder mode: skip API, accept anything
+  if (LS_PLACEHOLDER_MODE) {
+    localStorage.setItem(STORAGE_LICENSE_KEY, key);
+    showApp();
+    return;
+  }
+
+  // Disable button during request
+  button.disabled = true;
+  button.textContent = 'Checking…';
+
+  try {
+    const result = await activateLicense(key);
+
+    if (!result.activated) {
+      error.textContent = humanizeLSError(result.error) || 'That key didn\'t work. Double-check the email from your purchase.';
+      button.disabled = false;
+      button.innerHTML = 'Unlock →';
+      return;
+    }
+
+    // Verify the key belongs to OUR product
+    if (LS_PRODUCT_ID && result.meta && result.meta.product_id !== LS_PRODUCT_ID) {
+      error.textContent = 'This key is for a different product.';
+      button.disabled = false;
+      button.innerHTML = 'Unlock →';
+      return;
+    }
+
+    // Save the key + the activation instance ID for future validation
+    localStorage.setItem(STORAGE_LICENSE_KEY, key);
+    if (result.instance && result.instance.id) {
+      localStorage.setItem(STORAGE_INSTANCE_ID, result.instance.id);
+    }
+    showApp();
+  } catch (err) {
+    console.error('License check failed:', err);
+    error.textContent = 'Couldn\'t reach the license server. Check your connection and try again.';
+    button.disabled = false;
+    button.innerHTML = 'Unlock →';
+  }
+}
+
+async function activateLicense(key) {
+  const body = new URLSearchParams();
+  body.append('license_key', key);
+  body.append('instance_name', 'Smooth Paycheck — ' + (navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Browser'));
+
+  const res = await fetch(`${LS_API}/licenses/activate`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body.toString()
+  });
+  return await res.json();
+}
+
+async function validateLicense(key, instanceId) {
+  const body = new URLSearchParams();
+  body.append('license_key', key);
+  if (instanceId) body.append('instance_id', instanceId);
+
+  const res = await fetch(`${LS_API}/licenses/validate`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: body.toString()
+  });
+  return await res.json();
+}
+
+function humanizeLSError(err) {
+  if (!err) return null;
+  const e = err.toLowerCase();
+  if (e.includes('not found')) return 'We couldn\'t find that license key. Check for typos.';
+  if (e.includes('activation limit')) return 'This key has been activated on too many devices. Email us to reset it.';
+  if (e.includes('expired')) return 'This license has expired.';
+  if (e.includes('disabled')) return 'This license has been disabled. Contact support.';
+  return err;
+}
+
+function showApp() {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  initApp();
+}
+
+function clearLicenseAndReload() {
+  localStorage.removeItem(STORAGE_LICENSE_KEY);
+  localStorage.removeItem(STORAGE_INSTANCE_ID);
+  window.location.reload();
+}
+
+/* On load: if we have a saved license, re-validate silently
+   so we catch refunds/disables. If validation fails, kick
+   the user back to the gate. */
+async function tryAutoUnlock() {
+  const savedKey = localStorage.getItem(STORAGE_LICENSE_KEY);
+  if (!savedKey) {
+    setupGateListeners();
+    return;
+  }
+
+  // In placeholder mode, just trust the saved key
+  if (LS_PLACEHOLDER_MODE) {
+    showApp();
+    return;
+  }
+
+  // Validate the saved key with Lemon Squeezy
+  const savedInstance = localStorage.getItem(STORAGE_INSTANCE_ID);
+  try {
+    const result = await validateLicense(savedKey, savedInstance);
+    if (result.valid && result.license_key && result.license_key.status === 'active') {
+      showApp();
+    } else {
+      // Key was refunded, expired, or disabled — back to gate
+      clearLicenseAndReload();
+    }
+  } catch (err) {
+    // Network error: trust the saved key (offline mode), don't lock the user out
+    console.warn('Validation failed, allowing offline access:', err);
+    showApp();
+  }
+}
+
+function setupGateListeners() {
+  document.getElementById('license-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkLicense();
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tryAutoUnlock);
+} else {
+  tryAutoUnlock();
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════ */
+function initApp() {
+  loadState();
+  if (state.income.length === 0) {
+    // Seed with 3 empty months going backwards from current
+    seedIncomeMonths(3);
+  }
+  renderIncomeList();
+  document.getElementById('exp-personal').value = state.expPersonal || '';
+  document.getElementById('exp-business').value = state.expBusiness || '';
+  document.getElementById('tax-slider').value = state.taxRate;
+  updateTaxDisplay(state.taxRate);
+
+  // Auto-save on input changes
+  document.getElementById('exp-personal').addEventListener('input', e => {
+    state.expPersonal = parseFloat(e.target.value) || 0;
+    saveState();
+  });
+  document.getElementById('exp-business').addEventListener('input', e => {
+    state.expBusiness = parseFloat(e.target.value) || 0;
+    saveState();
+  });
+}
+
+function seedIncomeMonths(n) {
+  const now = new Date();
+  state.income = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    state.income.push({ month: label, amount: null });
+  }
+}
+
+/* ════════════════════════════════════════════════
+   STATE PERSISTENCE
+   ════════════════════════════════════════════════ */
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) { /* ignore quota errors */ }
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function resetAll() {
+  if (!confirm('Start over? This will clear all your inputs.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = { income: [], expPersonal: 0, expBusiness: 0, taxRate: 25, results: null };
+  seedIncomeMonths(3);
+  renderIncomeList();
+  document.getElementById('exp-personal').value = '';
+  document.getElementById('exp-business').value = '';
+  document.getElementById('tax-slider').value = 25;
+  updateTaxDisplay(25);
+  goToStep(1);
+}
+
+/* ════════════════════════════════════════════════
+   STEP 1: INCOME
+   ════════════════════════════════════════════════ */
+function renderIncomeList() {
+  const list = document.getElementById('income-list');
+  list.innerHTML = '';
+  state.income.forEach((row, idx) => {
+    const div = document.createElement('div');
+    div.className = 'income-row';
+    div.innerHTML = `
+      <div class="month">${row.month}</div>
+      <div class="input-wrap">
+        <span class="currency">$</span>
+        <input type="number" inputmode="numeric" placeholder="0"
+          value="${row.amount !== null ? row.amount : ''}"
+          oninput="updateIncomeAmount(${idx}, this.value)" />
+      </div>
+      <button class="remove-btn" onclick="removeIncomeRow(${idx})"
+        ${state.income.length <= 1 ? 'disabled' : ''}>×</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function updateIncomeAmount(idx, val) {
+  state.income[idx].amount = val === '' ? null : parseFloat(val);
+  saveState();
+}
+
+function addIncomeRow() {
+  // Add an earlier month to the front
+  const earliest = state.income[0];
+  let newDate;
+  if (earliest) {
+    const parsed = parseMonthLabel(earliest.month);
+    newDate = new Date(parsed.year, parsed.monthIdx - 1, 1);
+  } else {
+    newDate = new Date();
+  }
+  const label = newDate.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  state.income.unshift({ month: label, amount: null });
+  renderIncomeList();
+  saveState();
+}
+
+function removeIncomeRow(idx) {
+  if (state.income.length <= 1) return;
+  state.income.splice(idx, 1);
+  renderIncomeList();
+  saveState();
+}
+
+function parseMonthLabel(label) {
+  // "Apr 2026" -> { year: 2026, monthIdx: 3 }
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const parts = label.split(' ');
+  return { monthIdx: months.indexOf(parts[0]), year: parseInt(parts[1]) };
+}
+
+function togglePaste() {
+  const sec = document.getElementById('paste-section');
+  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+}
+
+function applyPaste() {
+  const txt = document.getElementById('paste-area').value;
+  const lines = txt.split(/[\n,]/).map(s => s.trim()).filter(s => s);
+  const numbers = lines.map(s => parseFloat(s.replace(/[^0-9.\-]/g, ''))).filter(n => !isNaN(n));
+
+  if (numbers.length === 0) {
+    showToast('No numbers found.');
+    return;
+  }
+
+  // Build months: most recent month last
+  const now = new Date();
+  state.income = [];
+  for (let i = numbers.length - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    state.income.push({ month: label, amount: numbers[numbers.length - 1 - i] });
+  }
+  renderIncomeList();
+  saveState();
+  togglePaste();
+  showToast(`Loaded ${numbers.length} months.`);
+}
+
+/* ════════════════════════════════════════════════
+   STEP NAVIGATION
+   ════════════════════════════════════════════════ */
+function goToStep(n) {
+  // Validate step 1
+  if (n === 2) {
+    const valid = state.income.filter(r => r.amount !== null && r.amount > 0);
+    if (valid.length < 3) {
+      showToast('Please enter at least 3 months of income.');
+      return;
+    }
+  }
+  // Hide all
+  ['screen-1','screen-2','screen-3','screen-results'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  // Show target
+  if (n === 'results') {
+    document.getElementById('screen-results').classList.add('active');
+    document.getElementById('indicator').style.display = 'none';
+  } else {
+    document.getElementById('screen-' + n).classList.add('active');
+    document.getElementById('indicator').style.display = 'flex';
+    updateStepIndicator(n);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStepIndicator(n) {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('dot-' + i);
+    dot.classList.remove('active','done');
+    if (i < n) dot.classList.add('done');
+    else if (i === n) dot.classList.add('active');
+  }
+  const labels = {1: 'Step 1 of 3 · Income', 2: 'Step 2 of 3 · Expenses', 3: 'Step 3 of 3 · Tax rate'};
+  document.getElementById('step-label').textContent = labels[n];
+}
+
+/* ════════════════════════════════════════════════
+   STEP 2: EXPENSES
+   ════════════════════════════════════════════════ */
+function useExpenseDefaults() {
+  const valid = state.income.filter(r => r.amount !== null && r.amount > 0).map(r => r.amount);
+  const avg = valid.reduce((a,b) => a+b, 0) / valid.length;
+  const personal = Math.round(avg * 0.5 / 100) * 100;
+  const business = Math.round(avg * 0.15 / 100) * 100;
+  document.getElementById('exp-personal').value = personal;
+  document.getElementById('exp-business').value = business;
+  state.expPersonal = personal;
+  state.expBusiness = business;
+  saveState();
+  showToast('Defaults filled in. Tweak as you like.');
+}
+
+/* ════════════════════════════════════════════════
+   STEP 3: TAX
+   ════════════════════════════════════════════════ */
+function updateTaxDisplay(val) {
+  document.getElementById('tax-display').textContent = val;
+  state.taxRate = parseInt(val);
+  saveState();
+  // Clear active preset chips that don't match
+  document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+}
+
+function setTaxPreset(rate, btn) {
+  document.getElementById('tax-slider').value = rate;
+  updateTaxDisplay(rate);
+  document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ════════════════════════════════════════════════
+   THE CALCULATION ENGINE
+   This is the math that makes the whole product worth $29.
+   ════════════════════════════════════════════════ */
+function calculate() {
+  const validIncome = state.income.filter(r => r.amount !== null && r.amount > 0);
+  const amounts = validIncome.map(r => r.amount);
+  const sorted = [...amounts].sort((a,b) => a - b);
+
+  const avg = amounts.reduce((a,b) => a+b, 0) / amounts.length;
+  const min = sorted[0];
+  const max = sorted[sorted.length - 1];
+
+  // Sustainable paycheck = 30th percentile of GROSS income, minus tax & ops costs
+  // (Conservative: based on slow months, not average months)
+  const p30Index = Math.floor(sorted.length * 0.3);
+  const p30Gross = sorted[p30Index];
+
+  // Of that gross figure, subtract tax and business expenses to get the net we can pay ourselves
+  const taxAmt = p30Gross * (state.taxRate / 100);
+  const afterTax = p30Gross - taxAmt - state.expBusiness;
+  // The owner pay is the "after tax & after business expenses" number, capped to make sense vs personal expenses
+  // We pay ourselves a little less than afterTax to leave room for buffer building
+  let paycheck = afterTax * 0.85;
+  // Don't let it go below a sensible floor (e.g., 60% of personal expenses if those are set)
+  if (state.expPersonal > 0 && paycheck < state.expPersonal * 0.6) {
+    paycheck = state.expPersonal * 0.6;
+  }
+  paycheck = Math.max(0, Math.round(paycheck / 10) * 10);
+
+  // Allocation percentages (informational, used for the bar)
+  const taxPct = state.taxRate;
+  // Operating: business expenses as % of average income (capped)
+  const opsPct = Math.min(30, Math.max(5, Math.round((state.expBusiness / avg) * 100)));
+  const bufferPct = 10;
+  const payPct = Math.max(20, 100 - taxPct - opsPct - bufferPct);
+
+  // Buffer target = 2 months of paycheck
+  const bufferTarget = paycheck * 2;
+  // ~6 months to fill at 10% of avg income/month
+  const monthlyBuffer = avg * 0.10;
+  const monthsToFill = monthlyBuffer > 0 ? Math.round(bufferTarget / monthlyBuffer) : 0;
+
+  // Stability score: based on coefficient of variation
+  // 0 = chaotic, 100 = perfectly steady
+  const variance = amounts.reduce((sum, x) => sum + Math.pow(x - avg, 2), 0) / amounts.length;
+  const stdDev = Math.sqrt(variance);
+  const cv = avg > 0 ? stdDev / avg : 1; // coefficient of variation
+  // Map CV: cv=0 -> 100, cv=0.6+ -> 0
+  let stability = Math.round(Math.max(0, Math.min(100, 100 - (cv * 165))));
+  // Volatility percentage (max swing from avg)
+  const swingPct = Math.round(Math.max((max-avg)/avg, (avg-min)/avg) * 100);
+
+  let stabilityVerdict, stabilityColor, stabilityText;
+  if (stability >= 70) {
+    stabilityVerdict = ['Steady', 'and reliable'];
+    stabilityColor = 'var(--accent)';
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's unusually stable for freelance work — you have more headroom than most.`;
+  } else if (stability >= 40) {
+    stabilityVerdict = ['Bumpy,', 'but manageable'];
+    stabilityColor = 'var(--warn)';
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's normal for freelance work but well above what most people guess. It's why your buffer matters — and why the paycheck above is intentionally conservative.`;
+  } else {
+    stabilityVerdict = ['Genuinely', 'volatile'];
+    stabilityColor = 'var(--danger)';
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's a wide range — your buffer needs to be bigger than average, and the paycheck above is calibrated to survive a slow stretch.`;
+  }
+
+  state.results = {
+    paycheck, avg, min, max, swingPct,
+    taxPct, opsPct, bufferPct, payPct,
+    bufferTarget, monthlyBuffer, monthsToFill,
+    stability, stabilityVerdict, stabilityColor, stabilityText,
+    income: validIncome
+  };
+  saveState();
+  return state.results;
+}
+
+/* ════════════════════════════════════════════════
+   RESULTS RENDER
+   ════════════════════════════════════════════════ */
+function calculateAndShow() {
+  const r = calculate();
+  renderResults(r);
+  goToStep('results');
+}
+
+function renderResults(r) {
+  const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  // Hero
+  document.getElementById('r-paycheck').textContent = fmt(r.paycheck);
+  document.getElementById('r-paycheck-2').textContent = fmt(r.paycheck);
+  document.getElementById('r-verdict').textContent =
+    `Safe to pay yourself this much based on your last ${r.income.length} months`;
+
+  // Allocation
+  document.getElementById('seg-tax').style.width = r.taxPct + '%';
+  document.getElementById('seg-ops').style.width = r.opsPct + '%';
+  document.getElementById('seg-buf').style.width = r.bufferPct + '%';
+  document.getElementById('seg-pay').style.width = r.payPct + '%';
+  document.getElementById('seg-tax').textContent = r.taxPct + '%';
+  document.getElementById('seg-ops').textContent = r.opsPct + '%';
+  document.getElementById('seg-buf').textContent = r.bufferPct + '%';
+  document.getElementById('seg-pay').textContent = r.payPct + '%';
+  document.getElementById('r-tax-pct').textContent = r.taxPct + '%';
+  document.getElementById('r-ops-pct').textContent = r.opsPct + '%';
+  document.getElementById('r-buf-pct').textContent = r.bufferPct + '%';
+  document.getElementById('r-pay-pct').textContent = r.payPct + '%';
+  document.getElementById('r-tax-amt').textContent = `$${fmt(r.taxPct * 10)} per $1k`;
+  document.getElementById('r-ops-amt').textContent = `$${fmt(r.opsPct * 10)} per $1k`;
+  document.getElementById('r-buf-amt').textContent = `$${fmt(r.bufferPct * 10)} per $1k`;
+  document.getElementById('r-pay-amt').textContent = `$${fmt(r.payPct * 10)} per $1k`;
+
+  // Buffer
+  document.getElementById('r-buffer-target').textContent = fmt(r.bufferTarget);
+  document.getElementById('r-buffer-target-2').textContent = fmt(r.bufferTarget);
+  document.getElementById('r-buffer-monthly').textContent = fmt(r.monthlyBuffer);
+  document.getElementById('r-buffer-months').textContent = '~' + r.monthsToFill;
+  // Animate the fill bar to a "halfway-there" feel for visual interest
+  setTimeout(() => {
+    document.getElementById('r-buffer-fill').style.width = '0%';
+  }, 100);
+
+  // Stability dial
+  const dial = document.getElementById('r-dial');
+  dial.style.stroke = r.stabilityColor;
+  const offset = 440 - (440 * r.stability / 100);
+  setTimeout(() => { dial.style.strokeDashoffset = offset; }, 200);
+  document.getElementById('r-stability').textContent = r.stability;
+  document.getElementById('r-stability-verdict').innerHTML =
+    `${r.stabilityVerdict[0]} <span class="em" style="color:${r.stabilityColor}">${r.stabilityVerdict[1]}</span>.`;
+  document.getElementById('r-stability-text').innerHTML = r.stabilityText;
+
+  // Scale tiers
+  ['scale-1','scale-2','scale-3'].forEach(id => document.getElementById(id).classList.remove('active'));
+  if (r.stability < 40) document.getElementById('scale-1').classList.add('active');
+  else if (r.stability < 70) document.getElementById('scale-2').classList.add('active');
+  else document.getElementById('scale-3').classList.add('active');
+
+  // Income chart
+  document.getElementById('r-chart-meta').textContent =
+    `avg $${fmt(r.avg)} · low $${fmt(r.min)} · high $${fmt(r.max)}`;
+  renderIncomeChart(r);
+}
+
+function renderIncomeChart(r) {
+  const wrap = document.getElementById('r-chart-wrap');
+  const months = r.income;
+  const W = 600, H = 180;
+  const maxAmount = r.max * 1.05;
+  const baselineY = H - (r.paycheck / maxAmount) * (H - 30);
+
+  const barW = Math.min(40, (W - 20) / months.length - 12);
+  const gap = ((W - 20) - (barW * months.length)) / Math.max(1, months.length - 1);
+
+  let bars = '';
+  months.forEach((m, i) => {
+    const x = 10 + i * (barW + gap);
+    const h = (m.amount / maxAmount) * (H - 30);
+    const y = (H - 30) - h;
+    let color = 'var(--tax)';
+    if (m.amount === r.max) color = 'var(--accent)';
+    else if (m.amount === r.min) color = 'var(--danger)';
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="${color}" rx="2" />`;
+    bars += `<text class="chart-month-label" x="${x + barW/2}" y="${H - 10}" text-anchor="middle">${m.month.split(' ')[0]}</text>`;
+  });
+
+  wrap.innerHTML = `
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <line class="chart-baseline" x1="0" y1="${baselineY}" x2="${W}" y2="${baselineY}" />
+      <text class="chart-baseline-label" x="${W}" y="${baselineY - 6}" text-anchor="end">Your paycheck · $${r.paycheck.toLocaleString()}</text>
+      ${bars}
+    </svg>
+  `;
+}
+
+/* ════════════════════════════════════════════════
+   PDF EXPORT
+   Uses jsPDF (loaded from CDN) to generate a clean
+   one-page summary. Plain text + simple shapes — no
+   fancy fonts — so it works reliably across browsers.
+   ════════════════════════════════════════════════ */
+function downloadPDF() {
+  const r = state.results;
+  if (!r) { showToast('Calculate first.'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const PW = 612, PH = 792;
+  const M = 56;
+  const fmt = n => '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  // Header
+  doc.setFillColor(42, 111, 77);
+  doc.circle(M + 4, 50, 4, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(26, 26, 26);
+  doc.text('Smooth Paycheck', M + 16, 54);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(138, 133, 128);
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  doc.text(date, PW - M, 54, { align: 'right' });
+
+  // Divider
+  doc.setDrawColor(232, 226, 212);
+  doc.line(M, 70, PW - M, 70);
+
+  // Hero number
+  doc.setFontSize(10);
+  doc.setTextColor(138, 133, 128);
+  doc.text('YOUR SUSTAINABLE PAYCHECK', PW/2, 110, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(64);
+  doc.setTextColor(26, 26, 26);
+  doc.text(fmt(r.paycheck), PW/2, 170, { align: 'center' });
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(13);
+  doc.setTextColor(74, 74, 74);
+  doc.text('— every month, even slow ones', PW/2, 192, { align: 'center' });
+
+  // Allocation block
+  let y = 240;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(26, 26, 26);
+  doc.text('When money lands, split it like this:', M, y);
+  y += 22;
+
+  // Allocation bar
+  const barX = M, barY = y, barW = PW - M*2, barH = 24;
+  const segs = [
+    { pct: r.taxPct, color: [91, 141, 190], label: 'Tax' },
+    { pct: r.opsPct, color: [224, 142, 69], label: 'Ops' },
+    { pct: r.bufferPct, color: [42, 111, 77], label: 'Buffer' },
+    { pct: r.payPct, color: [26, 26, 26], label: 'Pay' }
+  ];
+  let cx = barX;
+  segs.forEach(s => {
+    const w = (s.pct / 100) * barW;
+    doc.setFillColor(...s.color);
+    doc.rect(cx, barY, w, barH, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    if (w > 30) doc.text(s.pct + '%', cx + w/2, barY + 16, { align: 'center' });
+    cx += w;
+  });
+
+  y += barH + 22;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(74, 74, 74);
+  const allocLabels = [
+    `Taxes: ${r.taxPct}%  ($${r.taxPct*10} per $1k)`,
+    `Operating: ${r.opsPct}%  ($${r.opsPct*10} per $1k)`,
+    `Buffer: ${r.bufferPct}%  ($${r.bufferPct*10} per $1k)`,
+    `Owner Pay: ${r.payPct}%  ($${r.payPct*10} per $1k)`
+  ];
+  allocLabels.forEach((l, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    doc.text(l, M + col * 240, y + row * 18);
+  });
+  y += 50;
+
+  // Buffer target box
+  doc.setDrawColor(232, 226, 212);
+  doc.setFillColor(245, 240, 230);
+  doc.rect(M, y, PW - M*2, 70, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(138, 133, 128);
+  doc.text('YOUR BUFFER TARGET', M + 16, y + 22);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.setTextColor(26, 26, 26);
+  doc.text(fmt(r.bufferTarget), M + 16, y + 56);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(74, 74, 74);
+  doc.text('STABILITY SCORE', PW - M - 16, y + 22, { align: 'right' });
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.setTextColor(26, 26, 26);
+  doc.text(`${r.stability} / 100`, PW - M - 16, y + 56, { align: 'right' });
+
+  y += 100;
+
+  // Income summary
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(26, 26, 26);
+  doc.text(`Your last ${r.income.length} months`, M, y);
+  y += 16;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(74, 74, 74);
+  doc.text(`Average: ${fmt(r.avg)}    Low: ${fmt(r.min)}    High: ${fmt(r.max)}    Swing: ±${r.swingPct}%`, M, y);
+  y += 22;
+
+  // Tiny inline chart
+  const chartW = PW - M*2, chartH = 70;
+  const chartX = M, chartY = y;
+  const maxAmt = r.max * 1.05;
+  const bw = chartW / r.income.length - 4;
+  r.income.forEach((m, i) => {
+    const h = (m.amount / maxAmt) * chartH;
+    const bx = chartX + i * (bw + 4);
+    const by = chartY + chartH - h;
+    if (m.amount === r.max) doc.setFillColor(42, 111, 77);
+    else if (m.amount === r.min) doc.setFillColor(201, 74, 63);
+    else doc.setFillColor(91, 141, 190);
+    doc.rect(bx, by, bw, h, 'F');
+  });
+  // baseline
+  const baselineY = chartY + chartH - (r.paycheck / maxAmt) * chartH;
+  doc.setDrawColor(42, 111, 77);
+  doc.setLineDashPattern([3, 3], 0);
+  doc.line(chartX, baselineY, chartX + chartW, baselineY);
+  doc.setLineDashPattern([], 0);
+
+  y += chartH + 20;
+
+  // Action steps
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 26);
+  doc.text('Your three moves this week:', M, y);
+  y += 16;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(74, 74, 74);
+  const steps = [
+    `1. Open four sub-accounts at your bank: Tax, Operating, Buffer, Owner Pay.`,
+    `2. The next time a client payment hits, split it ${r.taxPct}/${r.opsPct}/${r.bufferPct}/${r.payPct} into those accounts.`,
+    `3. Pay yourself ${fmt(r.paycheck)} from the Owner Pay account on the 1st of every month.`
+  ];
+  steps.forEach(s => {
+    const lines = doc.splitTextToSize(s, PW - M*2);
+    doc.text(lines, M, y);
+    y += lines.length * 14 + 4;
+  });
+
+  // Footer
+  doc.setDrawColor(232, 226, 212);
+  doc.line(M, PH - 60, PW - M, PH - 60);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(9);
+  doc.setTextColor(138, 133, 128);
+  doc.text('Generated by Smooth Paycheck — your sustainable freelance paycheck calculator', PW/2, PH - 40, { align: 'center' });
+
+  doc.save('smooth-paycheck.pdf');
+  showToast('PDF downloaded.');
+}
+
+/* ════════════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════════════ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+</script>
+
+</body>
+</html>
