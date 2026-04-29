@@ -1686,9 +1686,9 @@ function renderIncomeList() {
       <div class="month">${row.month}</div>
       <div class="input-wrap">
         <span class="currency">${sym}</span>
-        <input type="number" inputmode="numeric" placeholder="0"
+        <input type="number" inputmode="decimal" min="0" step="any" placeholder="0"
           value="${row.amount !== null ? row.amount : ''}"
-          oninput="updateIncomeAmount(${idx}, this.value)" />
+          oninput="updateIncomeAmount(${idx}, this)" />
       </div>
       <button class="remove-btn" onclick="removeIncomeRow(${idx})"
         ${state.income.length <= 1 ? 'disabled' : ''}>×</button>
@@ -1697,8 +1697,36 @@ function renderIncomeList() {
   });
 }
 
-function updateIncomeAmount(idx, val) {
-  state.income[idx].amount = val === '' ? null : parseFloat(val);
+function updateIncomeAmount(idx, input) {
+  // Accept either an event-bound input element or a raw value string
+  // (callers used to pass `this.value`; now we pass `this` so we can clamp visually too)
+  const raw = typeof input === 'string' ? input : input.value;
+  if (raw === '') {
+    state.income[idx].amount = null;
+    saveState();
+    return;
+  }
+  const parsed = parseFloat(raw);
+  if (isNaN(parsed)) {
+    state.income[idx].amount = null;
+    saveState();
+    return;
+  }
+  // Income can't be negative. Clamp the input value AND the saved state.
+  if (parsed < 0) {
+    const clamped = Math.abs(parsed);
+    state.income[idx].amount = clamped;
+    if (typeof input !== 'string') {
+      input.value = clamped;
+      // Brief visual nudge so the user notices the auto-correction
+      input.style.transition = 'background 0.4s ease';
+      input.style.background = 'rgba(224, 142, 69, 0.18)';
+      setTimeout(() => { input.style.background = ''; }, 600);
+      showToast('Income can\'t be negative — flipped to a positive number.');
+    }
+  } else {
+    state.income[idx].amount = parsed;
+  }
   saveState();
 }
 
@@ -1747,18 +1775,29 @@ function applyPaste() {
     return;
   }
 
+  // Income can't be negative — flip any negatives the same way the input does
+  let flipped = 0;
+  const cleaned = numbers.map(n => {
+    if (n < 0) { flipped++; return Math.abs(n); }
+    return n;
+  });
+
   // Build months: most recent month last
   const now = new Date();
   state.income = [];
-  for (let i = numbers.length - 1; i >= 0; i--) {
+  for (let i = cleaned.length - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const label = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
-    state.income.push({ month: label, amount: numbers[numbers.length - 1 - i] });
+    state.income.push({ month: label, amount: cleaned[cleaned.length - 1 - i] });
   }
   renderIncomeList();
   saveState();
   togglePaste();
-  showToast(`Loaded ${numbers.length} months.`);
+  if (flipped > 0) {
+    showToast(`Loaded ${cleaned.length} months. Flipped ${flipped} negative value${flipped === 1 ? '' : 's'} to positive.`);
+  } else {
+    showToast(`Loaded ${cleaned.length} months.`);
+  }
 }
 
 /* ════════════════════════════════════════════════
@@ -1767,9 +1806,19 @@ function applyPaste() {
 function goToStep(n) {
   // Validate step 1
   if (n === 2) {
+    const filled = state.income.filter(r => r.amount !== null);
     const valid = state.income.filter(r => r.amount !== null && r.amount > 0);
+    const zeroOnly = filled.length - valid.length;
+
+    if (filled.length < 3) {
+      const missing = 3 - filled.length;
+      showToast(`Please fill in ${missing} more month${missing === 1 ? '' : 's'} of income.`);
+      return;
+    }
     if (valid.length < 3) {
-      showToast('Please enter at least 3 months of income.');
+      // They filled in 3+ rows but some are 0 (or were rejected).
+      // Months with $0 income are real (slow months happen) but the math needs >0 to compute meaningful percentiles.
+      showToast(`At least 3 months need a value above 0. ${zeroOnly === 1 ? 'One row is' : zeroOnly + ' rows are'} blank or zero.`);
       return;
     }
   }
