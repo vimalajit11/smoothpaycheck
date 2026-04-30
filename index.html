@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Smooth Paycheck — Turn chaotic freelance income into a steady monthly paycheck</title>
+<title>Smooth Paycheck · Turn chaotic freelance income into a steady monthly paycheck</title>
 <meta name="description" content="A 5-minute tool that calculates the largest amount you can safely pay yourself every month. No spreadsheets, no signup, no accounting software." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,6 +12,7 @@
   :root {
     --bg: #FBF9F4;
     --bg-warm: #F5F0E6;
+    --paper: #FFFFFF;
     --ink: #1A1A1A;
     --ink-soft: #4A4A4A;
     --ink-muted: #8A8580;
@@ -20,6 +21,11 @@
     --accent-soft: #DCEAE0;
     --hi: #F4D35E;
     --danger: #C94A3F;
+    --warn: #E08E45;
+    --tax: #5B8DBE;
+    --ops: #E08E45;
+    --buffer: #2A6F4D;
+    --pay: #1A1A1A;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -305,6 +311,322 @@
     margin-top: 32px;
   }
 
+  /* Report preview section */
+  .report-preview-section {
+    background: var(--bg-warm);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 100px 0 80px;
+    text-align: center;
+  }
+  .report-preview-section h2 {
+    margin: 0 auto 18px;
+    text-align: center;
+  }
+  .report-preview-section .lead {
+    font-size: 19px;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 auto 56px;
+    line-height: 1.5;
+  }
+  .report-frame {
+    max-width: 540px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow:
+      0 1px 2px rgba(26, 26, 26, 0.04),
+      0 8px 24px rgba(26, 26, 26, 0.08),
+      0 32px 64px rgba(26, 26, 26, 0.12);
+    border-radius: 4px;
+    padding: 36px 40px 32px;
+    position: relative;
+    text-align: left;
+    transform: rotate(-0.4deg);
+    transition: transform 0.4s ease;
+  }
+  .report-frame:hover { transform: rotate(0deg) translateY(-2px); }
+  .report-frame::before {
+    content: "ONE-PAGE PDF";
+    position: absolute;
+    top: -12px; left: 28px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 5px 12px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    font-weight: 500;
+    border-radius: 2px;
+  }
+  .rp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 28px;
+  }
+  .rp-brand {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .rp-brand-dot { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
+  .rp-date {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--ink-muted);
+  }
+  .rp-eyebrow {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .rp-paycheck {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 64px;
+    letter-spacing: -0.045em;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .rp-cadence {
+    text-align: center;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    margin-bottom: 14px;
+  }
+  .rp-pill {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .rp-pill span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .rp-pill span::before {
+    content: "";
+    width: 5px; height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .rp-section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .rp-section-title em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+  .rp-alloc-bar {
+    display: flex;
+    height: 18px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .rp-alloc-bar > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: 'Fraunces', serif;
+  }
+  .rp-alloc-legend {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .rp-alloc-cell .lbl {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+  }
+  .rp-alloc-cell .lbl::before {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--swatch, var(--tax));
+    display: inline-block;
+  }
+  .rp-alloc-cell .pct {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+  }
+  .rp-alloc-cell .sub {
+    font-size: 9px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .rp-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .rp-mini-card {
+    background: var(--bg-warm);
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+  .rp-mini-card .lbl {
+    font-size: 8px;
+    letter-spacing: 0.18em;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .rp-mini-card .val {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 1.05;
+    margin-bottom: 4px;
+  }
+  .rp-mini-card .val .unit {
+    font-size: 10px;
+    color: var(--ink-muted);
+    font-weight: 500;
+  }
+  .rp-mini-card .note {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 10px;
+    color: var(--ink-soft);
+  }
+  .rp-mini-card .note.warn { color: var(--warn); }
+  .rp-chart-wrap {
+    margin-bottom: 22px;
+  }
+  .rp-chart-meta {
+    text-align: right;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+  }
+  .rp-chart {
+    width: 100%;
+    height: 64px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0;
+    position: relative;
+  }
+  .rp-chart .bar {
+    flex: 1;
+    border-radius: 1px 1px 0 0;
+  }
+  .rp-chart .baseline {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px dashed var(--accent);
+    pointer-events: none;
+  }
+  .rp-chart-months {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .rp-chart-months span {
+    flex: 1;
+    text-align: center;
+    font-size: 7px;
+    color: var(--ink-muted);
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .rp-steps {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+  .rp-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-bottom: 8px;
+    font-size: 10px;
+    line-height: 1.4;
+    color: var(--ink-soft);
+  }
+  .rp-step:last-child { margin-bottom: 0; }
+  .rp-step-num {
+    background: var(--ink);
+    color: var(--bg);
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', serif;
+    font-size: 8px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .rp-foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-size: 9px;
+    color: var(--ink-muted);
+  }
+  .rp-foot-tagline {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 10px;
+    color: var(--ink-soft);
+  }
+  .rp-caption {
+    margin-top: 32px;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+    color: var(--ink-soft);
+  }
+
+  /* Report preview responsive */
+  @media (max-width: 600px) {
+    .report-preview-section { padding: 64px 0 56px; }
+    .report-frame { padding: 28px 22px 24px; transform: none; max-width: 100%; }
+    .rp-paycheck { font-size: 48px; }
+    .rp-mini-card .val { font-size: 17px; }
+  }
+
   /* Steps */
   .steps {
     display: grid;
@@ -313,8 +635,7 @@
     margin-top: 64px;
     border: 1px solid var(--rule);
     background: white;
-  }
-  .step {
+  }.step {
     padding: 48px 40px;
     border-right: 1px solid var(--rule);
     position: relative;
@@ -567,7 +888,7 @@
 
   /* Footer */
   footer {
-    padding: 48px 0;
+    padding: 48px 0 36px;
     border-top: 1px solid rgba(251, 249, 244, 0.15);
     background: var(--ink);
     color: rgba(251, 249, 244, 0.6);
@@ -581,6 +902,19 @@
     gap: 16px;
   }
   footer .logo { color: var(--bg); font-size: 18px; }
+  footer a { color: rgba(251, 249, 244, 0.85); text-decoration: none; border-bottom: 1px solid rgba(251, 249, 244, 0.25); }
+  footer a:hover { color: var(--bg); border-bottom-color: var(--hi); }
+  .footer-disclaimer {
+    max-width: 880px;
+    margin: 28px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid rgba(251, 249, 244, 0.1);
+    font-size: 12px;
+    line-height: 1.55;
+    color: rgba(251, 249, 244, 0.4);
+    text-align: center;
+    font-style: italic;
+  }
 
   /* ── Responsive ────────────────────────────────────────── */
   @media (max-width: 820px) {
@@ -646,7 +980,7 @@
       Stop guessing what you can <span class="underline-word">pay yourself</span> this month.
     </h1>
     <p class="lead">
-      Smooth Paycheck turns your chaotic freelance income into a steady monthly paycheck — in under 5 minutes. No spreadsheets, no accounting software, no signup.
+      Smooth Paycheck turns your chaotic freelance income into a steady monthly paycheck. In under 5 minutes. No spreadsheets, no accounting software, no signup.
     </p>
     <div class="cta-row">
       <a href="#REPLACE_WITH_DODO_CHECKOUT_URL" class="btn-primary">
@@ -662,7 +996,7 @@
     <div class="hero-visual">
       <div class="preview-label">Your sustainable paycheck</div>
       <div class="preview-number">$4,280</div>
-      <div class="preview-sub italic-serif">— every month, even slow ones</div>
+      <div class="preview-sub italic-serif">every month, even slow ones</div>
       <div class="preview-grid">
         <div>
           <div class="num">$8,400</div>
@@ -691,7 +1025,7 @@
           You've tried "just saving more." You've tried spreadsheets that you abandoned by week two. You've downloaded QuickBooks, taken one look at the chart of accounts, and closed the tab.
         </p>
         <p>
-          The problem isn't you. The problem is that every personal finance tool ever built assumes you get paid the same amount on the 1st and the 15th. <strong>You don't.</strong> So you're stuck doing freelance finance on hard mode — paying yourself whatever's left over after the panic subsides.
+          The problem isn't you. The problem is that every personal finance tool ever built assumes you get paid the same amount on the 1st and the 15th. <strong>You don't.</strong> So you're stuck doing freelance finance on hard mode, paying yourself whatever's left over after the panic subsides.
         </p>
       </div>
     </div>
@@ -732,9 +1066,110 @@
       <div class="step">
         <div class="step-num">Step 03</div>
         <h3>Get your paycheck number</h3>
-        <p>One big number on the screen — what you can safely pay yourself every month. Plus a buffer target and stability score.</p>
+        <p>One big number on the screen: what you can safely pay yourself every month. Plus a buffer target and stability score.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ─── REPORT PREVIEW ─── -->
+<section class="report-preview-section">
+  <div class="container">
+    <div class="section-eyebrow">Your downloadable report</div>
+    <h2>This is what you'll <span class="em">walk away with.</span></h2>
+    <p class="lead">
+      Every calculation ends with a one-page PDF you can save, print, or stick on the fridge as a reminder.
+    </p>
+
+    <div class="report-frame">
+      <div class="rp-header">
+        <div class="rp-brand"><span class="rp-brand-dot"></span> Smooth Paycheck</div>
+        <div class="rp-date">April 30, 2026</div>
+      </div>
+
+      <div class="rp-eyebrow">— YOUR SUSTAINABLE PAYCHECK —</div>
+      <div class="rp-paycheck">$4,280</div>
+      <div class="rp-cadence">every month, even slow ones</div>
+      <div class="rp-pill"><span>Calibrated to your last 9 months</span></div>
+
+      <div class="rp-section-title">When money lands, <em>split it like this.</em></div>
+      <div class="rp-alloc-bar">
+        <div style="width:25%; background:var(--tax)">25%</div>
+        <div style="width:15%; background:var(--ops)">15%</div>
+        <div style="width:10%; background:var(--buffer)">10%</div>
+        <div style="width:50%; background:var(--pay)">50%</div>
+      </div>
+      <div class="rp-alloc-legend">
+        <div class="rp-alloc-cell" style="--swatch:var(--tax)">
+          <div class="lbl">TAXES</div>
+          <div class="pct">25%</div>
+          <div class="sub">$250 / $1k</div>
+        </div>
+        <div class="rp-alloc-cell" style="--swatch:var(--ops)">
+          <div class="lbl">OPS</div>
+          <div class="pct">15%</div>
+          <div class="sub">$150 / $1k</div>
+        </div>
+        <div class="rp-alloc-cell" style="--swatch:var(--buffer)">
+          <div class="lbl">BUFFER</div>
+          <div class="pct">10%</div>
+          <div class="sub">$100 / $1k</div>
+        </div>
+        <div class="rp-alloc-cell" style="--swatch:var(--pay)">
+          <div class="lbl">PAY</div>
+          <div class="pct">50%</div>
+          <div class="sub">$500 / $1k</div>
+        </div>
+      </div>
+
+      <div class="rp-cards">
+        <div class="rp-mini-card">
+          <div class="lbl">BUFFER TARGET</div>
+          <div class="val">$8,560</div>
+          <div class="note">~12 mo to fill</div>
+        </div>
+        <div class="rp-mini-card">
+          <div class="lbl">STABILITY</div>
+          <div class="val">39<span class="unit"> / 100</span></div>
+          <div class="note warn">Bumpy, but manageable</div>
+        </div>
+      </div>
+
+      <div class="rp-section-title">Your last 9 months</div>
+      <div class="rp-chart-wrap">
+        <div class="rp-chart-meta">avg $7,122 · low $2,400 · high $11,800</div>
+        <div class="rp-chart">
+          <div class="bar" style="height:42%; background:var(--tax)"></div>
+          <div class="bar" style="height:65%; background:var(--tax)"></div>
+          <div class="bar" style="height:18%; background:var(--danger)"></div>
+          <div class="bar" style="height:48%; background:var(--tax)"></div>
+          <div class="bar" style="height:84%; background:var(--accent)"></div>
+          <div class="bar" style="height:30%; background:var(--tax)"></div>
+          <div class="bar" style="height:60%; background:var(--tax)"></div>
+          <div class="bar" style="height:56%; background:var(--tax)"></div>
+          <div class="bar" style="height:55%; background:var(--tax)"></div>
+          <div class="baseline" style="bottom:31%;"></div>
+        </div>
+        <div class="rp-chart-months">
+          <span>AUG</span><span>SEP</span><span>OCT</span><span>NOV</span>
+          <span>DEC</span><span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span>
+        </div>
+      </div>
+
+      <div class="rp-steps">
+        <div class="rp-section-title" style="margin-bottom:10px;">Three moves <em>this week.</em></div>
+        <div class="rp-step"><span class="rp-step-num">1</span><span>Open four sub-accounts at your bank: Tax, Ops, Buffer, Owner Pay.</span></div>
+        <div class="rp-step"><span class="rp-step-num">2</span><span>When the next payment hits, split it 25/15/10/50 into those accounts.</span></div>
+        <div class="rp-step"><span class="rp-step-num">3</span><span>Pay yourself $4,280 from Owner Pay on the 1st. Same number every month.</span></div>
+      </div>
+
+      <div class="rp-foot">
+        <span>smoothpaycheck.com</span>
+        <span class="rp-foot-tagline">Stop running your finances on vibes.</span>
+      </div>
+    </div>
+
+    <p class="rp-caption">Yours, the moment you finish the calculator.</p>
   </div>
 </section>
 
@@ -747,7 +1182,7 @@
       <div class="feature">
         <div class="feature-num">i.</div>
         <div class="feature-name">Your sustainable paycheck</div>
-        <div class="feature-desc">The headline number. The amount you can pay yourself monthly without panic — calculated from your actual income, not your dream income.</div>
+        <div class="feature-desc">The headline number. The amount you can pay yourself monthly without panic. Calculated from your actual income, not your dream income.</div>
       </div>
       <div class="feature">
         <div class="feature-num">ii.</div>
@@ -793,7 +1228,7 @@
         <ul>
           <li>You have a salaried W-2 / PAYE job with no side income</li>
           <li>You're already running a fully-staffed agency with a bookkeeper</li>
-          <li>You enjoy spreadsheets — genuinely. Some people do, and we respect that</li>
+          <li>You enjoy spreadsheets, genuinely. Some people do, and we respect that</li>
           <li>You need full double-entry accounting for tax filing</li>
         </ul>
       </div>
@@ -809,7 +1244,7 @@
     <div class="pricing-card">
       <div class="stamp">Launch price</div>
       <div class="pricing-name">Smooth Paycheck</div>
-      <div class="pricing-tag italic-serif">— the whole tool, no tiers, no upsells</div>
+      <div class="pricing-tag italic-serif">the whole tool, no tiers, no upsells</div>
       <div class="pricing-price">
         <span class="currency">$</span>
         <span class="amount">29</span>
@@ -846,7 +1281,7 @@
       </div>
       <div class="faq-item">
         <div class="faq-q">What if my income is really unpredictable?</div>
-        <div class="faq-a">Then you need this more than anyone. The Stability Score and buffer target are specifically built for high-volatility income — that's the whole reason it exists.</div>
+        <div class="faq-a">Then you need this more than anyone. The Stability Score and buffer target are specifically built for high-volatility income. That's the whole reason it exists.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Does this work outside the US?</div>
@@ -854,7 +1289,7 @@
       </div>
       <div class="faq-item">
         <div class="faq-q">Will my data be safe?</div>
-        <div class="faq-a">Your numbers never leave your device. There's no account, no login, no server storing your income — just a tool that runs in your browser.</div>
+        <div class="faq-a">Your numbers never leave your device. There's no account, no login, no server storing your income. Just a tool that runs in your browser.</div>
       </div>
     </div>
   </div>
@@ -867,7 +1302,7 @@
     <p>
       Five minutes from now, you could know exactly what you can pay yourself this month. And next month. And the slow month after that.
     </p>
-    <a href="#REPLACE_WITH_DODO_CHECKOUT_URL" class="btn-primary">Calculate my paycheck — $29 →</a>
+    <a href="#REPLACE_WITH_DODO_CHECKOUT_URL" class="btn-primary">Calculate my paycheck for $29 →</a>
   </div>
 </section>
 
@@ -875,7 +1310,16 @@
 <footer>
   <div class="container">
     <div class="logo"><span class="logo-dot"></span> Smooth Paycheck</div>
-    <div>© 2026 · Built for people whose income doesn't show up on the 1st and the 15th.</div>
+    <div>
+      Questions? <a href="mailto:contact@smoothpaycheck.com">contact@smoothpaycheck.com</a>
+      &nbsp;·&nbsp;
+      © 2026 · Built for people whose income doesn't show up on the 1st and the 15th.
+    </div>
+  </div>
+  <div class="container">
+    <p class="footer-disclaimer">
+      Smooth Paycheck is an educational tool. It is not financial, tax, or legal advice. Numbers shown are estimates based on the inputs you provide. Consult a qualified accountant or financial advisor for guidance on your specific situation.
+    </p>
   </div>
 </footer>
 
