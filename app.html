@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Smooth Paycheck — Your Sustainable Paycheck Calculator</title>
+<title>Smooth Paycheck · Your Sustainable Paycheck Calculator</title>
 <meta name="description" content="Calculate the largest amount you can safely pay yourself every month, even during slow stretches." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1144,7 +1144,7 @@
   <div id="screen-2" class="screen">
     <div class="step-eyebrow">Step 2</div>
     <h2 class="step-title">What does your <span class="em">life cost?</span></h2>
-    <p class="step-sub">Rough monthly numbers — round to the nearest 100. We'll use these to size your buffer.</p>
+    <p class="step-sub">Rough monthly numbers, rounded to the nearest 100. We'll use these to size your buffer.</p>
 
     <div class="input-card">
       <label for="exp-personal">Personal expenses</label>
@@ -1207,7 +1207,7 @@
     <div class="hero-result">
       <div class="hero-eyebrow">Your sustainable paycheck</div>
       <div class="paycheck-amount"><span class="currency" data-currency-symbol>$</span><span id="r-paycheck">0</span></div>
-      <div class="paycheck-cadence">— every month, even slow ones</div>
+      <div class="paycheck-cadence">every month, even slow ones</div>
       <div class="paycheck-verdict">
         <span class="verdict-dot"></span>
         <span id="r-verdict">Safe to pay yourself this much</span>
@@ -1256,7 +1256,7 @@
         </div>
       </div>
       <div class="alloc-explainer">
-        Open <b>four sub-accounts</b> at your bank. The moment a client payment hits, move the percentages above into each one. Pay yourself only from the Owner Pay account — never the main one.
+        Open <b>four sub-accounts</b> at your bank. The moment a client payment hits, move the percentages above into each one. Pay yourself only from the Owner Pay account. Never the main one.
       </div>
     </div>
 
@@ -1281,7 +1281,7 @@
         <span><b id="r-buffer-months">~6</b> months to fill</span>
       </div>
       <div class="buffer-takeaway">
-        Once you've stashed <b><span data-currency-symbol>$</span><span id="r-buffer-target-2">0</span></b> in a separate account, slow months stop being scary. You just keep paying yourself <b><span data-currency-symbol>$</span><span id="r-paycheck-2">0</span></b> every month — same number, every time.
+        Once you've stashed <b><span data-currency-symbol>$</span><span id="r-buffer-target-2">0</span></b> in a separate account, slow months stop being scary. You just keep paying yourself <b><span data-currency-symbol>$</span><span id="r-paycheck-2">0</span></b> every month. Same number, every time.
       </div>
     </div>
 
@@ -1440,11 +1440,11 @@ function applyCurrencyToUI() {
 
 // Set to true while testing; false in production.
 // When true, any non-empty key unlocks (no API call).
-const DODO_PLACEHOLDER_MODE = true;
+const DODO_PLACEHOLDER_MODE = false;
 
 // Switch to 'https://test.dodopayments.com' if using
 // Dodo's sandbox / test mode for end-to-end testing.
-const DODO_API = 'https://live.dodopayments.com';
+const DODO_API = 'https://test.dodopayments.com';
 
 const STORAGE_LICENSE_KEY = 'smoothpaycheck_license';
 const STORAGE_INSTANCE_ID = 'smoothpaycheck_instance';
@@ -1722,7 +1722,7 @@ function updateIncomeAmount(idx, input) {
       input.style.transition = 'background 0.4s ease';
       input.style.background = 'rgba(224, 142, 69, 0.18)';
       setTimeout(() => { input.style.background = ''; }, 600);
-      showToast('Income can\'t be negative — flipped to a positive number.');
+      showToast('Income can\'t be negative, flipped to a positive number.');
     }
   } else {
     state.income[idx].amount = parsed;
@@ -1940,15 +1940,15 @@ function calculate() {
   if (stability >= 70) {
     stabilityVerdict = ['Steady', 'and reliable'];
     stabilityColor = 'var(--accent)';
-    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's unusually stable for freelance work — you have more headroom than most.`;
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's unusually stable for freelance work. You have more headroom than most.`;
   } else if (stability >= 40) {
     stabilityVerdict = ['Bumpy,', 'but manageable'];
     stabilityColor = 'var(--warn)';
-    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's normal for freelance work but well above what most people guess. It's why your buffer matters — and why the paycheck above is intentionally conservative.`;
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's normal for freelance work but well above what most people guess. It's why your buffer matters, and why the paycheck above is intentionally conservative.`;
   } else {
     stabilityVerdict = ['Genuinely', 'volatile'];
     stabilityColor = 'var(--danger)';
-    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's a wide range — your buffer needs to be bigger than average, and the paycheck above is calibrated to survive a slow stretch.`;
+    stabilityText = `Your income swings about <b>±${swingPct}%</b> month to month. That's a wide range. Your buffer needs to be bigger than average, and the paycheck above is calibrated to survive a slow stretch.`;
   }
 
   state.results = {
@@ -2164,7 +2164,7 @@ function downloadPDF() {
   doc.setFont('InstrumentSerif', 'italic');
   doc.setFontSize(16);
   doc.setTextColor(...C.inkSoft);
-  doc.text('— every month, even slow ones', PW/2, 200, { align: 'center' });
+  doc.text('every month, even slow ones', PW/2, 200, { align: 'center' });
 
   // Verdict pill
   const verdictText = `Calibrated to your last ${r.income.length} months`;
