@@ -1557,40 +1557,57 @@ function clearLicenseAndReload() {
    trusting the saved key (offline grace mode).
 
    Also: if the user just came from a successful Dodo checkout,
-   the URL will have ?status=success&license_key=XXX. We auto-fill
-   and auto-unlock so the post-purchase experience is seamless. */
+   the URL will have ?status=success or ?status=succeeded plus
+   (sometimes) a license_key parameter. We auto-fill the input
+   and auto-unlock when possible. When the key isn't in the URL
+   (test mode quirk, or processor-side), we at least confirm the
+   payment so the buyer knows what to do. */
 async function tryAutoUnlock() {
-  // First, check for post-purchase redirect from Dodo
+  // Look at URL parameters from a possible Dodo checkout redirect
   const urlParams = new URLSearchParams(window.location.search);
-  const checkoutStatus = urlParams.get('status');
-  const checkoutKey = urlParams.get('license_key');
+  const checkoutStatus = urlParams.get('status'); // 'success' (our custom) or 'succeeded' (Dodo's)
+  const checkoutKey = urlParams.get('license_key') || urlParams.get('key');
+  const isPostPurchase = (checkoutStatus === 'success' || checkoutStatus === 'succeeded');
 
-  if (checkoutStatus === 'success' && checkoutKey) {
-    // Just paid! Strip the sensitive params from the URL so they don't
-    // end up in browser history or get accidentally shared
+  if (isPostPurchase) {
+    // Strip the sensitive params from the URL so the license key
+    // doesn't end up in browser history or get accidentally shared.
+    // We also avoid the "double status param" quirk in the address bar.
     const cleanUrl = window.location.pathname + window.location.hash;
     window.history.replaceState({}, document.title, cleanUrl);
 
-    // Show the gate first so the user sees something (with a friendly message)
-    setupGateListeners();
-    const input = document.getElementById('license-input');
-    if (input) input.value = checkoutKey;
+    // Best path: license key is in the URL, auto-unlock.
+    if (checkoutKey) {
+      setupGateListeners();
+      const input = document.getElementById('license-input');
+      if (input) input.value = checkoutKey;
 
-    showToast('Payment confirmed. Unlocking your app…');
+      showToast('Payment confirmed. Unlocking your app…');
 
-    // Now run validation, which will save the key and show the app
-    if (DODO_PLACEHOLDER_MODE) {
-      // In placeholder mode, just save and unlock
-      localStorage.setItem(STORAGE_LICENSE_KEY, checkoutKey);
-      setTimeout(showApp, 600);
+      if (DODO_PLACEHOLDER_MODE) {
+        localStorage.setItem(STORAGE_LICENSE_KEY, checkoutKey);
+        setTimeout(showApp, 600);
+        return;
+      }
+      setTimeout(() => checkLicense(), 200);
       return;
     }
-    // Real validation path
-    setTimeout(() => checkLicense(), 200);
+
+    // Fallback: payment confirmed but no key in URL. This happens in test
+    // mode and may happen in live mode if processor delays key generation.
+    // Show the gate with a friendly post-purchase confirmation message
+    // so the buyer knows what to do.
+    setupGateListeners();
+    showToast('Payment confirmed! Check your email for your license key.');
+    // Soften the gate copy to match the moment
+    const gateTitle = document.querySelector('#gate h1');
+    const gateSub = document.querySelector('#gate p');
+    if (gateTitle) gateTitle.innerHTML = 'You\'re <span class="em">in.</span>';
+    if (gateSub) gateSub.textContent = 'Your license key is on its way to your inbox. Paste it below to unlock the full tool. (It usually arrives within a minute, but sometimes up to 5.)';
     return;
   }
 
-  // Otherwise, normal flow: check for a previously saved license
+  // Normal flow: check for a previously saved license
   const savedKey = localStorage.getItem(STORAGE_LICENSE_KEY);
   if (!savedKey) {
     setupGateListeners();
