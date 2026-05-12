@@ -85,6 +85,24 @@
     color: var(--ink-soft);
   }
   nav .price-tag b { color: var(--ink); font-weight: 600; }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+  }
+  .nav-already-bought {
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 2px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+  .nav-already-bought:hover {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
 
   /* ── HERO ────────────────────────────────────────── */
   .hero {
@@ -968,9 +986,11 @@
 <nav>
   <div class="container">
     <div class="logo"><span class="logo-dot"></span> Smooth Paycheck</div>
-    <div class="price-tag">
-      <a href="app.html" style="color:var(--ink-soft); text-decoration:none; margin-right:18px; border-bottom:1px solid var(--rule); padding-bottom:2px;">Already bought?</a>
-      One-time payment · <b>$29</b>
+    <div class="nav-right">
+      <a href="app.html" class="nav-already-bought">Already bought?</a>
+      <div class="price-tag">
+        One-time payment · <b>$29</b>
+      </div>
     </div>
   </div>
 </nav>
