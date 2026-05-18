@@ -670,16 +670,66 @@
     font-style: italic; color: var(--ink-soft);
   }
   .lm-success {
-    padding: 20px;
+    padding: 24px;
     background: var(--accent-soft);
     border-radius: 4px;
     font-size: 15px; line-height: 1.55;
   }
-  .lm-success strong { color: var(--accent); }
-  .lm-success em {
+  .lm-success-eyebrow {
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .lm-success-headline {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .lm-success-headline em {
     font-family: 'Instrument Serif', serif;
     font-style: italic;
+    font-weight: 400;
   }
+  .lm-download-btn {
+    display: block;
+    text-align: center;
+    padding: 16px 22px;
+    font-family: 'Inter Tight', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    background: var(--ink);
+    color: var(--bg);
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+    margin-bottom: 14px;
+  }
+  .lm-download-btn:hover { background: var(--accent); }
+  .lm-success-secondary {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .lm-success-secondary em {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    color: var(--ink);
+  }
+  .lm-success-secondary a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .lm-success-secondary a:hover { color: var(--ink); }
   .lm-error {
     margin-top: 10px;
     padding: 10px 12px;
@@ -888,11 +938,19 @@
         <button type="submit">Send me the guide →</button>
       </form>
       <p class="lm-note">
-        You'll also get <em>After Hustle</em>, a free Monday newsletter on work, money, and design — for people whose income doesn't fit a salary. Unsubscribe anytime.
+        Free. You'll get the PDF instantly, with the option to subscribe to <em>After Hustle</em> — a free Monday newsletter on work, money, and design — after.
       </p>
 
       <div class="lm-success" id="lm-success" style="display:none">
-        <strong>Sent.</strong> Check your inbox — the welcome email from <em>After Hustle</em> has your guide. (Give it a minute. If you don't see it, check spam.)
+        <div class="lm-success-eyebrow">Sent</div>
+        <div class="lm-success-headline">Your guide is <em>ready.</em></div>
+        <a class="lm-download-btn" id="lm-download-btn" href="/the-4-account-split.pdf" target="_blank" rel="noopener">
+          Download the PDF →
+        </a>
+        <p class="lm-success-secondary">
+          Want the Monday newsletter too? <em>After Hustle</em> is a free, short Monday read on work, money, and design — for people whose income doesn't fit a salary.
+          <a id="lm-subscribe-link" href="https://afterhustle.substack.com/subscribe" target="_blank" rel="noopener">Confirm your subscription →</a>
+        </p>
       </div>
       <div class="lm-error" id="lm-error" role="alert" style="display:none"></div>
     </div>
@@ -984,9 +1042,8 @@
   const successBox = document.getElementById('lm-success');
   const errorBox = document.getElementById('lm-error');
   const note = document.querySelector('.lm-note');
-
-  // Cloudflare Worker that proxies the subscribe to Substack (bypasses CORS)
-  const SUBSCRIBE_ENDPOINT = 'https://afterhustle-subscribe.vimal-ajit11.workers.dev/';
+  const subscribeLink = document.getElementById('lm-subscribe-link');
+  const downloadBtn = document.getElementById('lm-download-btn');
 
   function showError(msg) {
     errorBox.textContent = msg;
@@ -994,7 +1051,7 @@
     setTimeout(() => { errorBox.style.display = 'none'; }, 5000);
   }
 
-  form.addEventListener('submit', async function(e) {
+  form.addEventListener('submit', function(e) {
     e.preventDefault();
     const emailInput = form.querySelector('input[type="email"]');
     const email = emailInput.value.trim();
@@ -1003,29 +1060,25 @@
       return;
     }
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending…';
+    // Personalise the subscribe-confirm link with the user's email,
+    // so Substack's subscribe page prefills it.
+    if (subscribeLink) {
+      subscribeLink.href =
+        'https://afterhustle.substack.com/subscribe?email=' +
+        encodeURIComponent(email);
+    }
 
-    try {
-      const response = await fetch(SUBSCRIBE_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
-      });
+    // Swap form → success state. PDF is delivered immediately via the
+    // download button; subscribe is a separate optional action.
+    form.style.display = 'none';
+    if (note) note.style.display = 'none';
+    successBox.style.display = 'block';
 
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok && data.ok) {
-        form.style.display = 'none';
-        if (note) note.style.display = 'none';
-        successBox.style.display = 'block';
-      } else {
-        throw new Error('subscribe failed');
-      }
-    } catch (err) {
-      // Worker unreachable or returned an error — degrade to Substack's hosted subscribe page
-      window.location.href = 'https://afterhustle.substack.com/subscribe?email=' + encodeURIComponent(email);
+    // Trigger the download automatically so the user gets the PDF without
+    // an extra click. The button stays visible in case the auto-download
+    // is blocked or they want to download again.
+    if (downloadBtn) {
+      try { downloadBtn.click(); } catch (err) { /* user can click manually */ }
     }
   });
 })();
