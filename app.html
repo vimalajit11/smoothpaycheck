@@ -1113,8 +1113,8 @@
   <!-- ────── STEP 1: INCOME ────── -->
   <div id="screen-1" class="screen active">
     <div class="step-eyebrow">Step 1</div>
-    <h2 class="step-title">Drop in your last few months <span class="em">of income.</span></h2>
-    <p class="step-sub">More months = smarter math. Start with at least 3. You can add more or fewer rows as you like.</p>
+    <h2 class="step-title">Drop in your last 12 months <span class="em">of income.</span></h2>
+    <p class="step-sub">More months = smarter math. 12 gives you the most accurate number, but you can add or remove rows as you like.</p>
 
     <div class="currency-picker">
       <label for="currency-select">Currency</label>
@@ -1666,8 +1666,8 @@ if (document.readyState === 'loading') {
 function initApp() {
   loadState();
   if (state.income.length === 0) {
-    // Seed with 3 empty months going backwards from current
-    seedIncomeMonths(3);
+    // Seed with 12 empty months going backwards from current
+    seedIncomeMonths(12);
   }
   // Apply saved currency (defaults to USD if missing)
   if (!state.currency) state.currency = 'USD';
@@ -1724,7 +1724,7 @@ function resetAll() {
   if (!confirm('Start over? This will clear all your inputs.')) return;
   localStorage.removeItem(STORAGE_KEY);
   state = { income: [], expPersonal: 0, expBusiness: 0, taxRate: 25, currency: 'USD', results: null };
-  seedIncomeMonths(3);
+  seedIncomeMonths(12);
   document.getElementById('currency-select').value = 'USD';
   applyCurrencyToUI();
   renderIncomeList();
