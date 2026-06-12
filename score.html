@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Income Stability Score — Smooth Paycheck</title>
+<title>Income Stability Score | Smooth Paycheck</title>
 <meta name="description" content="A free tool that scores how volatile your freelance income really is. Your numbers never leave your browser." />
 
 <!-- ============================================================
@@ -149,14 +149,14 @@
   <section id="input-view">
     <div class="eyebrow"><span class="dot"></span> Smooth Paycheck · <b>Free tool</b></div>
     <h1>What's your income <span class="em">stability score?</span></h1>
-    <p class="lede">Enter your monthly income for the past year. In 60 seconds you'll see how volatile it really is — and what that means for paying yourself.</p>
+    <p class="lede">Enter your monthly income for the past year. In 60 seconds you'll see how volatile it really is, and what that means for paying yourself.</p>
     <div class="privacy">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8580" stroke-width="2"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6l-8-4z"/></svg>
       Your numbers never leave your browser. Nothing is saved or sent.
     </div>
 
     <div class="grid" id="grid"></div>
-    <p class="hint" id="hint">Fill in at least 6 months. Use any currency — just be consistent.</p>
+    <p class="hint" id="hint">Fill in at least 6 months. Use any currency, just be consistent.</p>
 
     <div class="actions">
       <button class="btn btn-primary" id="go">See my score</button>
@@ -205,7 +205,7 @@
 
     <div class="cta-card reveal" style="animation-delay:.2s">
       <h2 id="ctaHead">Now find the paycheck you can <span class="em">actually</span> pay yourself.</h2>
-      <p>Your score shows how unstable your income is. Smooth Paycheck takes the same numbers and calculates the exact steady amount you can pay yourself every month — one that holds even in your worst months.</p>
+      <p>Your score shows how unstable your income is. Smooth Paycheck takes the same numbers and calculates the exact steady amount you can pay yourself every month, one that holds even in your worst months.</p>
       <a class="btn-buy" id="buyLink" href="https://smoothpaycheck.com/" onclick="track('CTA Buy')">Get Smooth Paycheck →</a>
     </div>
 
@@ -259,7 +259,7 @@
   function interpFor(score){
     if(score<40) return "Your income is highly volatile. Budgeting on your average month all but guarantees you'll fall short, because your low months land far below it. This is exactly the situation a fixed paycheck drawn from a safe floor is built for.";
     if(score<65) return "Your income swings enough that a couple of strong months quietly mask how thin the low ones are. Budget on the average and the slow months will catch you out. A steady amount you pay yourself from your floor smooths the whole year.";
-    return "Your income is relatively steady — but even stable freelancers get caught by the occasional bad month. Knowing your true floor is what turns \u201crelatively steady\u201d into never having to think about a slow month again.";
+    return "Your income is relatively steady, but even stable freelancers get caught by the occasional bad month. Knowing your true floor is what turns \u201crelatively steady\u201d into never having to think about a slow month again.";
   }
 
   function compute(vals){
@@ -339,7 +339,7 @@
 
   document.getElementById('shareBtn').addEventListener('click',function(){
     var btn=this;
-    var text='My freelance income stability score is '+lastScore+'/100 — '+lastBand+'. Check yours free at smoothpaycheck.com';
+    var text='My freelance income stability score is '+lastScore+'/100: '+lastBand+'. Check yours free at smoothpaycheck.com';
     function done(){ btn.classList.add('copied'); btn.innerHTML='Copied ✓'; track('Score Copied'); setTimeout(function(){ btn.classList.remove('copied'); btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v14"/></svg> Copy my score'; },2200); }
     if(navigator.share && /Mobi|Android/i.test(navigator.userAgent)){
       navigator.share({text:text,url:'https://smoothpaycheck.com/'}).then(function(){track('Score Shared');}).catch(function(){});
