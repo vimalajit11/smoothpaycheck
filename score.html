@@ -176,6 +176,15 @@
     border-top:2px solid var(--rule);font-size:30px;font-weight:600;}
   #shareCard .sc-foot-l{color:var(--muted);}
   #shareCard .sc-foot-r{color:var(--accent);}
+
+  /* During capture, bring the card on-screen behind a covering overlay (reliable html2canvas render) */
+  #shareCard.capturing{left:0;top:0;z-index:2147483646;}
+  #shareOverlay{position:fixed;inset:0;z-index:2147483647;display:none;align-items:center;justify-content:center;background:var(--bg);}
+  #shareOverlay.show{display:flex;}
+  #shareOverlay .sp-msg{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--muted);font-weight:600;font-size:15px;}
+  #shareOverlay .sp-ring{width:34px;height:34px;border-radius:50%;border:3px solid var(--rule);border-top-color:var(--accent);animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){ #shareOverlay .sp-ring{animation:none;} }
 </style>
 </head>
 <body>
@@ -267,6 +276,8 @@
       <a href="https://smoothpaycheck.com/">smoothpaycheck.com</a>
     </div>
   </section>
+
+  <div id="shareOverlay" aria-hidden="true"><div class="sp-msg"><div class="sp-ring"></div>Building your card</div></div>
 
   <!-- Off-screen card rendered to a PNG for social sharing -->
   <div id="shareCard" aria-hidden="true">
@@ -428,46 +439,64 @@
     track('Score Caption Copied');
   }
 
+  function copyToClip(t){ try{ if(navigator.clipboard){ navigator.clipboard.writeText(t); } }catch(e){} }
+
+  function showCaptureStage(on){
+    var card=document.getElementById('shareCard'), ov=document.getElementById('shareOverlay');
+    if(on){ card.classList.add('capturing'); ov.classList.add('show'); }
+    else { card.classList.remove('capturing'); ov.classList.remove('show'); }
+  }
+
   document.getElementById('cardBtn').addEventListener('click',function(){
     var btn=this, orig=btn.innerHTML;
-    // Fallback if the image library has not loaded: copy the caption instead.
+    // If the image library never loaded, degrade gracefully to copying the caption.
     if(typeof html2canvas==='undefined'){
-      var t=shareText();
-      if(navigator.clipboard){ navigator.clipboard.writeText(t); }
+      copyToClip(shareText());
       btn.innerHTML='Caption copied \u2713';
       setTimeout(function(){ btn.innerHTML=orig; },2200);
       track('Score Caption Copied');
       return;
     }
     btn.disabled=true; btn.innerHTML='Building card\u2026';
-    function finish(){ btn.disabled=false; btn.innerHTML=orig; }
     buildShareCard();
+    function done(){ btn.disabled=false; btn.innerHTML=orig; showCaptureStage(false); }
+    function fail(){
+      // Never fail silently: copy the caption and tell the user what happened.
+      copyToClip(shareText());
+      btn.disabled=false; btn.innerHTML='Image didn\u2019t render, caption copied';
+      setTimeout(function(){ btn.innerHTML=orig; },2800);
+      showCaptureStage(false); track('Score Card Failed');
+    }
     var ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
     ready.then(function(){
+      // Bring the card on-screen behind a covering overlay so html2canvas captures a laid-out element.
+      showCaptureStage(true);
+      return new Promise(function(res){ requestAnimationFrame(function(){ requestAnimationFrame(res); }); });
+    }).then(function(){
       return html2canvas(document.getElementById('shareCard'),{scale:1,backgroundColor:'#FBF9F4',useCORS:true,logging:false});
     }).then(function(canvas){
+      if(!canvas || !canvas.toBlob){ fail(); return; }
       canvas.toBlob(function(blob){
-        if(!blob){ finish(); return; }
-        var url=URL.createObjectURL(blob);
-        var txt=shareText();
+        if(!blob){ fail(); return; }
+        var url=URL.createObjectURL(blob), txt=shareText();
         // Mobile: share the actual image straight to apps.
         try{
           var file=new File([blob],'my-income-stability-score.png',{type:'image/png'});
           if(navigator.canShare && navigator.canShare({files:[file]})){
-            navigator.share({files:[file],text:txt}).then(function(){track('Score Card Shared');}).catch(function(){}).finally(finish);
+            navigator.share({files:[file],text:txt}).then(function(){track('Score Card Shared');}).catch(function(){}).finally(done);
             return;
           }
         }catch(e){}
-        // Desktop: show preview, download, and post intents.
+        // Desktop: show preview, download link, and post intents.
         document.getElementById('cardPreview').src=url;
         document.getElementById('dlBtn').href=url;
         document.getElementById('liBtn').href='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent('https://smoothpaycheck.com/score');
         document.getElementById('xBtn').href='https://twitter.com/intent/tweet?text='+encodeURIComponent(txt);
         document.getElementById('sharePanel').hidden=false;
         track('Score Card Built');
-        finish();
+        done();
       },'image/png');
-    }).catch(function(){ finish(); });
+    }).catch(function(){ fail(); });
   });
 
   document.getElementById('dlBtn').addEventListener('click',function(){ track('Score Card Downloaded'); });
